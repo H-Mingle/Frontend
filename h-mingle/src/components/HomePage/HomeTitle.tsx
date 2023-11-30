@@ -20,7 +20,7 @@ const fadeIn = keyframes`
 
 const HomeTitleContainer = styled.div`
   text-align: center;
-  margin-top: 20px;
+  margin: 2rem;
   animation: ${fadeIn} 1.5s ease-out;
 
   .H-Mingle-title {
@@ -33,7 +33,7 @@ const HomeTitleContainer = styled.div`
   .H-Mingle-subtitle {
     font-size: 1.5em;
     color: #666;
-    margin-top: 20px;
+    margin-top: 0.8rem;
     font-weight: bold;
     text-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   }

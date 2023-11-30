@@ -24,6 +24,7 @@ const fadeIn = keyframes`
 `;
 
 const HomeEnterButtonContainer = styled.div`
+  margin: 1rem;
   text-align: center;
   animation: ${fadeIn} 1.5s ease-out;
 

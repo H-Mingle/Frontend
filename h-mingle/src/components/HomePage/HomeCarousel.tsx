@@ -63,6 +63,7 @@ const HomeCarousel = () => {
 const HomeCarouselContainer = styled.div`
   .carousel .carousel-slider {
     overflow: visible;
+    margin-top: 1rem;
   }
 
   .carousel-item {
