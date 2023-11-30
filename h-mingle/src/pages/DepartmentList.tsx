@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import DepartmentItem from '../components/DepartmentListPage/DepartmentItem';
@@ -7,15 +7,27 @@ const DepartmentList = () => {
   const navigate = useNavigate();
   const tempDepartments = new Array(8).fill(null);
 
+  // 로그인 상태를 나타내는 상태 변수
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 초기값 false
+
   const BackButton = styled(Button)``;
-  const MyPageButton = styled(Button)``;
+  const MyPageButton = styled(Button)``; // 로그인 되어있을 때만 보이게, 안되어 있으면 로그인/회원가입 화면으로 넘기기
+  const AuthButton = styled(Button)``; // 로그인/회원가입 버튼 (비로그인시 보이게, 로그인시 안보이게)
 
   return (
     <ListContainer>
       <TitleBar>
         <BackButton onClick={() => navigate('/')}>Home</BackButton>
         <Title>Department List</Title>
-        <MyPageButton onClick={() => navigate('/mypage')}>My Page</MyPageButton>
+        {isLoggedIn ? (
+          <MyPageButton onClick={() => navigate('/mypage')}>
+            My Page
+          </MyPageButton>
+        ) : (
+          <AuthButton onClick={() => navigate('/auth')}>
+            Login / Sign Up
+          </AuthButton>
+        )}
       </TitleBar>
 
       {tempDepartments.map((_, index) => (
