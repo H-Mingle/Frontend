@@ -5,6 +5,7 @@ import DepartmentList from './pages/DepartmentList';
 import Story from './pages/Story';
 import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
+import Edit from './pages/Edit';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/story" element={<Story />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/edit" element={<Edit />} />
       </Routes>
     </div>
   );

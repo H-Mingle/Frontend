@@ -54,6 +54,9 @@ const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: bold;
   color: #333;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 `;
 
 const WhiteBox = styled.div`
