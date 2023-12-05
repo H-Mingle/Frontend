@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
 const Story = () => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   // 이미지 확대를 위한 상태 (문자열 또는 null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const tmp_text =
@@ -17,12 +22,14 @@ const Story = () => {
     '/images/carousel/4.png',
   ];
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <StoryPageWrapper>
       <NavigationBar>
-        <BackButton onClick={() => navigate('/department-list')}>
-          Back
-        </BackButton>
+        <BackButton onClick={handleBack}>Back</BackButton>
         <Title>더현대 서울(여의도)</Title>
         <NavigationRightSection>
           <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
@@ -53,9 +60,9 @@ const Story = () => {
         <Statistics>
           <ViewCount>👀 1234</ViewCount>
           <LikeCount>🫶 567</LikeCount>
-          <StatisticsRightSection>
+          <StatisticsRightSection onClick={() => navigate('/mypage')}>
             <Username>nickname</Username> {/* 사용자 닉네임 */}
-            <ProfileImageContainerForWriter onClick={() => navigate('/mypage')}>
+            <ProfileImageContainerForWriter>
               <ProfileImageForWriter
                 src="/images/carousel/1.png"
                 alt="Profile"
@@ -163,6 +170,14 @@ const ProfileImageContainer = styled.div`
   border-radius: 70%;
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.3s ease;
+  /* 호버 스케일 될 때 화질 확대 및 저하에 따른 이미지 깨지거나 자글거림을 방지하기 위해 GPU 가속 활성화하여 이미지 최적화 */
+  will-change: transform;
+  transform: translateZ(0); // GPU 가속 활성화
+
+  &:hover {
+    transform: scale(1.05) translateZ(0); // 스케일링 시에도 GPU 가속 유지
+  }
 `;
 
 const ProfileImage = styled.img`
@@ -311,8 +326,10 @@ const ViewCount = styled.span`
 
 const LikeCount = styled.span`
   cursor: pointer;
+  transition: transform 0.3s ease;
+
   &:hover {
-    text-decoration: underline;
+    transform: scale(1.05);
   }
 `;
 
@@ -332,6 +349,14 @@ const StatisticsRightSection = styled.div`
   margin-left: auto;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  will-change: transform;
+  transform: translateZ(0); // GPU 가속 활성화
+
+  &:hover {
+    transform: scale(1.05) translateZ(0); // 스케일링 시에도 GPU 가속 유지
+  }
 `;
 
 const Username = styled.span`
@@ -396,6 +421,13 @@ const ProfileImageContainerForComment = styled.div`
   border-radius: 70%;
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.3s ease;
+  will-change: transform;
+  transform: translateZ(0); // GPU 가속 활성화
+
+  &:hover {
+    transform: scale(1.05) translateZ(0); // 스케일링 시에도 GPU 가속 유지
+  }
 `;
 
 const ProfileImageForComment = styled.img`

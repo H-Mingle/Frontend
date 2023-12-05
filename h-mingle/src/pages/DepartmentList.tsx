@@ -10,13 +10,9 @@ const DepartmentList = () => {
   // 로그인 상태를 나타내는 상태 변수
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 초기값 false
 
-  const BackButton = styled(Button)``;
-  const MyPageButton = styled(Button)``; // 로그인 되어있을 때만 보이게, 안되어 있으면 로그인/회원가입 화면으로 넘기기
-  const AuthButton = styled(Button)``; // 로그인/회원가입 버튼 (비로그인시 보이게, 로그인시 안보이게)
-
   return (
     <ListContainer>
-      <TitleBar>
+      <NavigationBar>
         <BackButton onClick={() => navigate('/')}>Home</BackButton>
         <Title>Department List</Title>
         {isLoggedIn ? (
@@ -28,7 +24,7 @@ const DepartmentList = () => {
             Login / Sign Up
           </AuthButton>
         )}
-      </TitleBar>
+      </NavigationBar>
 
       {tempDepartments.map((_, index) => (
         <DepartmentItem key={index} />
@@ -41,7 +37,7 @@ const ListContainer = styled.div`
   margin: 2rem 1rem;
 `;
 
-const TitleBar = styled.div`
+const NavigationBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -72,5 +68,9 @@ const Button = styled.button`
     transform: scale(1.03);
   }
 `;
+
+const BackButton = styled(Button)``;
+const MyPageButton = styled(Button)``; // 로그인 되어있을 때만 보이게, 안되어 있으면 로그인/회원가입 화면으로 넘기기
+const AuthButton = styled(Button)``; // 로그인/회원가입 버튼 (비로그인시 보이게, 로그인시 안보이게)
 
 export default DepartmentList;

@@ -6,6 +6,7 @@ import Story from './pages/Story';
 import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
 import Edit from './pages/Edit';
+import Feed from './pages/Feed';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/department-list" element={<DepartmentList />} />
+        <Route path="/feed" element={<Feed />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/story" element={<Story />} />
         <Route path="/auth" element={<Auth />} />

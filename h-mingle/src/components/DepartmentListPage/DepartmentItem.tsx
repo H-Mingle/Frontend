@@ -6,7 +6,7 @@ const DepartmentItem = () => {
   const navigate = useNavigate();
 
   return (
-    <ItemContainer onClick={() => navigate('/story')}>
+    <ItemContainer onClick={() => navigate('/feed')}>
       <ItemImage
         src="/images/department/default_department_image.png"
         alt="department"

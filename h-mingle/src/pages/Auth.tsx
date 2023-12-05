@@ -2,20 +2,24 @@ import React from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
+//TODO: 구글 로그인 형태로 변경해야함
+
 const Auth = () => {
   const navigate = useNavigate();
   const BackButton = styled(BackButtonContainer)``;
   const WhiteButton = styled(WhiteBox)``;
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <AuthPageContainer>
-      <TitleBar>
-        <BackButton onClick={() => navigate('/department-list')}>
-          Back
-        </BackButton>
+      <NavigationBar>
+        <BackButton onClick={handleBack}>Back</BackButton>
         <Title>Sign in / Sign up</Title>
         <WhiteButton>Hi :)</WhiteButton>
-      </TitleBar>
+      </NavigationBar>
       <AuthContainer>
         <LogoWrapper>
           <LogoIconWrapper>
@@ -43,7 +47,7 @@ const AuthPageContainer = styled.div`
   margin: 2rem 1rem;
 `;
 
-const TitleBar = styled.div`
+const NavigationBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -139,7 +143,6 @@ const SubLogo = styled.div`
   margin-left: 0.4rem;
   margin-top: 0.4rem;
   font-size: 1rem;
-  font-style: italic;
   font-weight: bold;
   align-items: end;
   margin-bottom: 2rem;

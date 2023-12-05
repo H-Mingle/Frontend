@@ -51,7 +51,6 @@ const SubLogo = styled.div`
   margin-left: 0.4rem;
   margin-top: 0.4rem;
   font-size: 1rem;
-  font-style: italic;
   font-weight: bold;
   align-items: end;
 `;
