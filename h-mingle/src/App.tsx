@@ -7,6 +7,7 @@ import MyPage from './pages/MyPage';
 import Auth from './pages/Auth';
 import Edit from './pages/Edit';
 import Feed from './pages/Feed';
+import NotFound from './components/Common/NotFound';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/story" element={<Story />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/edit" element={<Edit />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
