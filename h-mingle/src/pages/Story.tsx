@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 const Story = () => {
   const navigate = useNavigate();
 
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
   const handleBack = () => {
     navigate(-1);
   };
@@ -32,10 +34,18 @@ const Story = () => {
         <BackButton onClick={handleBack}>Back</BackButton>
         <Title>더현대 서울(여의도)</Title>
         <NavigationRightSection>
-          <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
-          <ProfileImageContainer onClick={() => navigate('/mypage')}>
-            <ProfileImage src="/images/carousel/1.png" alt="Profile" />
-          </ProfileImageContainer>
+          {isLoggedIn ? (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
+              <ProfileImageContainer onClick={() => navigate('/mypage')}>
+                <ProfileImage src="/images/carousel/1.png" alt="Profile" />
+              </ProfileImageContainer>
+            </div>
+          ) : (
+            <AuthButton onClick={() => navigate('/auth')}>
+              Login / Sign Up
+            </AuthButton>
+          )}
         </NavigationRightSection>
       </NavigationBar>
       <ArrowContainer>
@@ -132,7 +142,9 @@ const Story = () => {
   );
 };
 
-const StoryPageWrapper = styled.div``;
+const StoryPageWrapper = styled.div`
+  margin-bottom: 4rem;
+`;
 
 const NavigationBar = styled.div`
   position: fixed;
@@ -297,6 +309,8 @@ const BackButton = styled(Button)``;
 const EditButton = styled(Button)`
   margin-right: 1rem;
 `;
+
+const AuthButton = styled(Button)``;
 
 const TextContent = styled.div`
   width: 100%;

@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { TabProps } from '../types/TabProps';
 import { carouselImageData } from '../constants/HomePage/carouselImageData'; // 이미지 데이터 임포트
+import { ModalContainerProps } from '../types/ModalContainerProps';
+import { ModalBackgroundProps } from '../types/ModalBackgroundProps';
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -17,12 +19,19 @@ const MyPage = () => {
 
   // 개발 중이라 로그인 상태를 true로 설정 실제로는 false로 설정 해야함
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  const [selectedProfileImage, setSelectedProfileImage] = useState<
+    string | null
+  >(null);
+
+  const handleProfileImageClick = () => {
+    setSelectedProfileImage(profileImage);
+  };
+
   // 탭 상태 관리
   const [activeTab, setActiveTab] = useState('posts');
 
-  const [editingUsername, setEditingUsername] = useState(false);
   const [username, setUsername] = useState('Username');
-  const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState('...');
 
   const [isEditing, setIsEditing] = useState(false);
@@ -109,6 +118,18 @@ const MyPage = () => {
     }
   };
 
+  const handleProfileImageChangeClick = (event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevents click from bubbling up to the profile image wrapper
+    if (imageInputRef.current) {
+      imageInputRef.current.click();
+    }
+  };
+
+  // 문의하기 버튼 클릭 핸들러
+  const handleContactClick = () => {
+    window.open('https://www.instagram.com/flamozzi/', '_blank');
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -119,28 +140,31 @@ const MyPage = () => {
       <NavigationBar>
         <BackButton onClick={handleBack}>Back</BackButton>
         <Title>My Page</Title>
-        <SettingButton onClick={openModal}>Settings</SettingButton>
+        <SettingButton onClick={openModal}>Options</SettingButton>
       </NavigationBar>
 
-      {isModalOpen && (
-        <ModalBackground onClick={closeModal}>
-          <ModalContainer onClick={(e) => e.stopPropagation()}>
-            <ModalButton>문의하기</ModalButton>
-            <ModalButton>로그아웃</ModalButton>
-            <DeleteAccountButton>회원탈퇴</DeleteAccountButton>
-          </ModalContainer>
-        </ModalBackground>
-      )}
+      <ModalBackground isOpen={isModalOpen} onClick={closeModal}>
+        <ModalContainer
+          isOpen={isModalOpen}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ModalButton onClick={handleContactClick}>문의하기</ModalButton>
+          <ModalButton>로그아웃</ModalButton>
+          <DeleteAccountButton>회원탈퇴</DeleteAccountButton>
+        </ModalContainer>
+      </ModalBackground>
 
       <BodyContainer>
         <ProfileSection>
           {/* 조건부 렌더링을 사용하여 프로필 이미지 표시 */}
-          <ProfileImageWrapper onClick={triggerImageUpload}>
+          <ProfileImageWrapper onClick={handleProfileImageClick}>
             <ProfileImage
               src={profileImage || '/public/images/carousel/2.png'}
               alt="Profile"
             />
-            <ProfileImageChangeButton>+</ProfileImageChangeButton>
+            <ProfileImageChangeButton onClick={handleProfileImageChangeClick}>
+              +
+            </ProfileImageChangeButton>
           </ProfileImageWrapper>
 
           {/* 이미지 업로드를 위한 input 태그를 숨겨진 상태로 추가.
@@ -217,6 +241,12 @@ const MyPage = () => {
           </ImageGrid>
         </InfiniteScrollContainer>
       </BodyContainer>
+
+      {selectedProfileImage && (
+        <ImageModal onClick={() => setSelectedProfileImage(null)}>
+          <img src={selectedProfileImage} alt="Selected" />
+        </ImageModal>
+      )}
     </MyPageContainer>
   );
 };
@@ -368,6 +398,25 @@ const ImageItem = styled.img`
   }
 `;
 
+const ImageModal = styled.div`
+  /* Similar styling as in the Story component */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  img {
+    max-width: 80%;
+    max-height: 80%;
+  }
+`;
+
 // 무한 스크롤 구현
 const InfiniteScrollContainer = styled.div`
   /* 무한 스크롤에 필요한 스타일링 */
@@ -446,20 +495,24 @@ const EditingTextarea = styled.textarea`
   height: 80px;
 `;
 
-const ModalBackground = styled.div`
+const ModalBackground = styled.div<ModalBackgroundProps>`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, ${(props) => (props.isOpen ? 0.5 : 0)});
   backdrop-filter: blur(5px);
   display: flex;
   justify-content: flex-end;
+  visibility: ${(props) => (props.isOpen ? 'visible' : 'hidden')};
+  opacity: ${(props) => (props.isOpen ? 1 : 0)};
+  transition: opacity 0.3s, visibility 0.3s ease-in-out,
+    background 0.3s ease-in-out;
   z-index: 100;
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<ModalContainerProps>`
   background-color: white;
   width: 30%;
   height: 100%;
@@ -468,6 +521,9 @@ const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  transform: translateX(${(props) => (props.isOpen ? '0' : '100%')});
+  transition: transform 0.3s ease-in-out;
+  z-index: 100;
 `;
 
 const ModalButton = styled.button`

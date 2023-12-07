@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { GridItemProps } from '../types/feed';
+import { GridItemProps } from '../types/GridItemProps';
 import { carouselImageData } from '../constants/HomePage/carouselImageData';
 
 const Feed = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 초기값 false
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [images, setImages] = useState<string[]>([]); // 이미지 데이터를 저장할 상태 (임시로 carouselImageData를 사용)
 
   useEffect(() => {
@@ -63,15 +63,20 @@ const Feed = () => {
           Department List
         </BackButton>
         <Title>Feed</Title>
-        {isLoggedIn ? (
-          <MyPageButton onClick={() => navigate('/mypage')}>
-            My Page
-          </MyPageButton>
-        ) : (
-          <AuthButton onClick={() => navigate('/auth')}>
-            Login / Sign Up
-          </AuthButton>
-        )}
+        <NavigationRightSection>
+          {isLoggedIn ? (
+            <div>
+              <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
+              <MyPageButton onClick={() => navigate('/mypage')}>
+                My Page
+              </MyPageButton>
+            </div>
+          ) : (
+            <AuthButton onClick={() => navigate('/auth')}>
+              Login / Sign Up
+            </AuthButton>
+          )}
+        </NavigationRightSection>
       </NavigationBar>
       {/* 서브타이틀 변수 따로 받아서 현백 목동점의 이야기, 더현대 서울의 이야기 이런식으로 동적으로 만들기 */}
       <SubTitle>여러분이 만들어가는 더현대 서울의 이야기</SubTitle>
@@ -101,6 +106,11 @@ const NavigationBar = styled.div`
   margin-bottom: 40px;
 `;
 
+const NavigationRightSection = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: bold;
@@ -127,6 +137,9 @@ const Button = styled.button`
 `;
 
 const BackButton = styled(Button)``;
+const EditButton = styled(Button)`
+  margin-right: 1rem;
+`;
 const MyPageButton = styled(Button)``; // 로그인 되어있을 때만 보이게, 안되어 있으면 로그인/회원가입 화면으로 넘기기
 const AuthButton = styled(Button)``; // 로그인/회원가입 버튼 (비로그인시 보이게, 로그인시 안보이게)
 
