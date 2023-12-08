@@ -1,50 +1,93 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-
-//TODO: 구글 로그인 형태로 변경해야함
+import React, { useEffect, useState } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchOAuth2LoginUrl } from '../services/AuthServices'; // OAuth2 로그인 URL 요청 함수
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const BackButton = styled(BackButtonContainer)``;
-  const WhiteButton = styled(WhiteBox)``;
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      await fetchOAuth2LoginUrl(`http://localhost:8080${location.pathname}`);
+    } catch (error) {
+      console.error('Error fetching OAuth2 login URL:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(-1);
+    }
+  }, [isLoggedIn, navigate]);
+
+  const [activeImage, setActiveImage] = useState(0); // 현재 활성화된 이미지의 인덱스
+  const images = [
+    '/images/carousel/1.png',
+    '/images/carousel/2.png',
+    '/images/carousel/3.png',
+    '/images/carousel/4.png',
+    '/images/carousel/5.png',
+    '/images/carousel/6.png',
+    '/images/carousel/7.png',
+    '/images/carousel/8.png',
+    '/images/carousel/9.png',
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveImage(
+        (prevActiveImage) => (prevActiveImage + 1) % images.length
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   return (
     <AuthPageContainer>
       <NavigationBar>
         <BackButton onClick={handleBack}>Back</BackButton>
-        <Title>Sign in / Sign up</Title>
-        <WhiteButton>Hi :)</WhiteButton>
       </NavigationBar>
-      <AuthContainer>
-        <LogoWrapper>
-          <LogoIconWrapper>
-            <Logo>H-Mingle</Logo>
-            <LogoIcon />
-          </LogoIconWrapper>
-          <SubLogo>우리의 이야기가 모이는 곳</SubLogo>
-        </LogoWrapper>
-        <Input type="email" placeholder="Email Address" />
-        <Input type="password" placeholder="Password" />
-        <Button>Login</Button>
-        <DividerWrapper>
-          <Divider />
-          또는
-          <Divider />
-        </DividerWrapper>
-        <LinkButton>Forgot Password?</LinkButton>
-        <LinkButton>Sign Up</LinkButton>
-      </AuthContainer>
+      <BodyContainer>
+        <ImageBackground>
+          <CircleImage src="/images/carousel/1.png" alt="Background" />
+          <CircleImage src="/images/carousel/2.png" alt="Background" />
+          <CircleImage src="/images/carousel/3.png" alt="Background" />
+          <CircleImage src="/images/carousel/4.png" alt="Background" />
+        </ImageBackground>
+        <AuthContainer>
+          <LogoWrapper>
+            <LogoIconWrapper>
+              <Logo>H-Mingle</Logo>
+              <LogoIcon />
+            </LogoIconWrapper>
+            <SubLogo>우리의 이야기가 모이는 곳</SubLogo>
+          </LogoWrapper>
+          <GoogleLoginButton onClick={handleGoogleLogin}>
+            <GoogleLogo src="/images/icons/googleLogo.png" />
+            Google로 로그인 / 시작하기
+          </GoogleLoginButton>
+        </AuthContainer>
+      </BodyContainer>
     </AuthPageContainer>
   );
 };
 
 const AuthPageContainer = styled.div`
-  margin: 2rem 1rem;
+  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
 `;
 
 const NavigationBar = styled.div`
@@ -54,21 +97,14 @@ const NavigationBar = styled.div`
   margin-bottom: 40px;
 `;
 
-const Title = styled.h1`
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #333;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-`;
-
-const WhiteBox = styled.div`
-  padding: 10px 20px;
-  background-color: white;
-  color: white;
-  border: none;
-`;
+// const Title = styled.h1`
+//   font-size: 2.5rem;
+//   font-weight: bold;
+//   color: #333;
+//   position: absolute;
+//   left: 50%;
+//   transform: translateX(-50%);
+// `;
 
 const BackButtonContainer = styled.button`
   padding: 10px 20px;
@@ -86,17 +122,95 @@ const BackButtonContainer = styled.button`
   }
 `;
 
+const fadeInOut = keyframes`
+  0%, 100% { opacity: 0; }
+  25%, 75% { opacity: 1; }
+`;
+
+const BodyContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+`;
+
+const ImageBackground = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.7;
+`;
+
 const AuthContainer = styled.div`
   width: 100%;
-  max-width: 400px;
-  margin: 5rem auto;
+  max-width: 32rem;
   padding: 2rem;
-  background-color: #f9f9f9;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  background: #fffff4;
+  border-radius: 1rem;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  border-width: 1px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%); // 정확한 중앙 위치로 조정
+  z-index: 10;
+`;
+
+const CircleImage = styled.img`
+  width: 60vh;
+  height: 60vh;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  position: absolute;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+
+  &:nth-child(1) {
+    animation-name: ${fadeInOut};
+    top: 0%;
+    left: 0%;
+    animation-duration: 6.8s;
+    animation-delay: 1.2s;
+  }
+  &:nth-child(2) {
+    animation-name: ${fadeInOut};
+    top: 0%;
+    right: 2%;
+    width: 76vh;
+    height: 76vh;
+    animation-duration: 7s;
+    animation-delay: 1.6s;
+  }
+  &:nth-child(3) {
+    animation-name: ${fadeInOut};
+    top: 2%;
+    right: 36%;
+    width: 24vh;
+    height: 24vh;
+    animation-duration: 6.4s;
+    animation-delay: 1.8s;
+  }
+  &:nth-child(4) {
+    animation-name: ${fadeInOut};
+    top: 27%;
+    left: 20%;
+    width: 58vh;
+    height: 58vh;
+    animation-duration: 8s;
+    animation-delay: 1.4s;
+  }
+  object-fit: cover;
 `;
 
 const LogoWrapper = styled.div`
@@ -148,53 +262,31 @@ const SubLogo = styled.div`
   margin-bottom: 2rem;
 `;
 
-const Input = styled.input`
+const GoogleLoginButton = styled.button`
   width: 100%;
   padding: 10px;
-  margin-bottom: 1rem;
+  background-color: white;
+  color: #333;
   border: 1px solid #ccc;
   border-radius: 5px;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 10px;
-  background-color: #333;
-  color: white;
-  border: none;
-  border-radius: 5px;
   cursor: pointer;
-  margin-bottom: 1rem;
-
-  &:hover {
-    background-color: black;
-  }
-`;
-
-const DividerWrapper = styled.div`
   display: flex;
   align-items: center;
-  width: 100%;
-  margin: 20px 0;
-`;
-
-const Divider = styled.hr`
-  flex: 1;
-  border: none;
-  border-top: 1px solid #ccc;
-  margin: 0 10px;
-`;
-
-const LinkButton = styled.button`
-  background: none;
-  border: none;
-  color: #333;
-  cursor: pointer;
-  margin-bottom: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  position: relative;
+  z-index: 2; // 버튼을 가장 상위 레이어로
 
   &:hover {
-    text-decoration: underline;
+    background-color: #f8f8f8;
   }
+`;
+
+const GoogleLogo = styled.img`
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 `;
 
 export default Auth;
