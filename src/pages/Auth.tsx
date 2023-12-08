@@ -17,7 +17,7 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      await fetchOAuth2LoginUrl(`http://localhost:8080${location.pathname}`);
+      await fetchOAuth2LoginUrl(`http://localhost:3000${location.pathname}`);
     } catch (error) {
       console.error('Error fetching OAuth2 login URL:', error);
     }

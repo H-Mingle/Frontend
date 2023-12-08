@@ -9,7 +9,7 @@ import { TokenStorage } from '../utils/TokenStorage';
 // OAuth2.0 로그인 URL 가져오기
 export const fetchOAuth2LoginUrl = async (redirectUrl: string) => {
   const response = await getOAuth2LoginUrl(redirectUrl);
-  window.location.href = response.oauthLink; // 구글 로그인 페이지로 리디렉션
+  window.location.href = response.data.oauthLink; // 구글 로그인 페이지로 리디렉션
 };
 
 // OAuth2.0 로그인
