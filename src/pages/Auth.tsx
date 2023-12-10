@@ -123,8 +123,8 @@ const BackButtonContainer = styled.button`
 `;
 
 const fadeInOut = keyframes`
-  0%, 100% { opacity: 0; }
-  25%, 75% { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 `;
 
 const BodyContainer = styled.div`
@@ -141,14 +141,14 @@ const ImageBackground = styled.div`
   width: 100%;
   height: 100%;
   z-index: -1;
-  opacity: 0.7;
+  opacity: 0.8;
 `;
 
 const AuthContainer = styled.div`
   width: 100%;
   max-width: 32rem;
   padding: 2rem;
-  background: #fffff4;
+  background: #fffffa;
   border-radius: 1rem;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
   border-width: 1px;
@@ -159,7 +159,7 @@ const AuthContainer = styled.div`
   position: absolute;
   top: 38%;
   left: 50%;
-  transform: translate(-50%, -50%); // 정확한 중앙 위치로 조정
+  transform: translate(-50%, -50%);
   z-index: 10;
 `;
 
@@ -171,17 +171,17 @@ const CircleImage = styled.img`
   object-fit: cover;
   border-radius: 50%;
   position: absolute;
-  animation-duration: 3s;
+  animation-duration: 1.5s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-fill-mode: both;
+  animation-iteration-count: 1; // 애니메이션을 한 번만 실행
 
   &:nth-child(1) {
     animation-name: ${fadeInOut};
     top: 0%;
     left: 0%;
-    animation-duration: 6.8s;
-    animation-delay: 1.2s;
+    animation-delay: 0.4s;
   }
   &:nth-child(2) {
     animation-name: ${fadeInOut};
@@ -189,8 +189,7 @@ const CircleImage = styled.img`
     right: 2%;
     width: 76vh;
     height: 76vh;
-    animation-duration: 7s;
-    animation-delay: 1.6s;
+    animation-delay: 0.8s;
   }
   &:nth-child(3) {
     animation-name: ${fadeInOut};
@@ -198,8 +197,7 @@ const CircleImage = styled.img`
     right: 36%;
     width: 24vh;
     height: 24vh;
-    animation-duration: 6.4s;
-    animation-delay: 1.8s;
+    animation-delay: 1s;
   }
   &:nth-child(4) {
     animation-name: ${fadeInOut};
@@ -207,8 +205,7 @@ const CircleImage = styled.img`
     left: 20%;
     width: 58vh;
     height: 58vh;
-    animation-duration: 8s;
-    animation-delay: 1.4s;
+    animation-delay: 0.6s;
   }
   object-fit: cover;
 `;
@@ -276,7 +273,7 @@ const GoogleLoginButton = styled.button`
   margin-bottom: 1rem;
   font-weight: bold;
   position: relative;
-  z-index: 2; // 버튼을 가장 상위 레이어로
+  z-index: 2;
 
   &:hover {
     background-color: #f8f8f8;
