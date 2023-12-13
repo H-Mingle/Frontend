@@ -1,37 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
+import { createPost } from '../api/posts';
 
 const Edit = () => {
   const navigate = useNavigate();
   const editorRef = useRef<Editor>(null);
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<Array<string | null>>([
-    null,
-    null,
-    null,
-    null,
-  ]);
+  const channelId = localStorage.getItem('channelId') || '';
+  const [images, setImages] = useState<
+    { file: File | null; url: string | null }[]
+  >(new Array(4).fill({ file: null, url: null }));
+
   const isPostButtonActive =
-    images.every((img) => img !== null) && content.trim() !== '';
-  // 히든 파일 인풋을 위한 ref
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(
-    null
-  );
+    images.every((image) => image.file !== null) && content.trim() !== '';
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   useEffect(() => {
-    // 프리뷰 패널 오른쪽에 상시 고정 or 탭 형식 결정 로직
     const handleResize = () => {
       if (editorRef.current) {
         const editorInstance = editorRef.current.getInstance();
-        if (window.innerWidth > 1200) {
-          editorInstance.changePreviewStyle('vertical');
-        } else {
-          editorInstance.changePreviewStyle('tab');
-        }
+        editorInstance.changePreviewStyle(
+          window.innerWidth > 1200 ? 'vertical' : 'tab'
+        );
       }
     };
 
@@ -41,39 +37,33 @@ const Edit = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleBack = () => {
-    navigate(-1);
+  const handleUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const newFile = event.target.files?.[0] || null;
+    if (newFile) {
+      const newImages = [...images];
+      newImages[index] = {
+        file: newFile,
+        url: URL.createObjectURL(newFile),
+      };
+      setImages(newImages);
+    }
   };
 
-  const handleImageUpload = (index: number) => {
-    // 이미지 업로드 로직
-    const updatedImages = [...images];
-    updatedImages[index] = '/path/to/uploaded/image.png'; // Replace with actual image path
-    setImages(updatedImages);
-  };
-
-  const handlePost = () => {
+  const handlePost = async () => {
     if (isPostButtonActive) {
-      navigate('/feed');
-      window.location.reload();
-    }
-  };
-
-  const triggerFileInput = (index: number) => {
-    setCurrentImageIndex(index);
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && currentImageIndex !== null) {
-      const file = event.target.files[0];
-      if (file) {
-        const imageUrl = URL.createObjectURL(file);
-        const updatedImages = [...images];
-        updatedImages[currentImageIndex] = imageUrl;
-        setImages(updatedImages);
+      try {
+        const postData = {
+          content,
+          channelId,
+          images: images.map((image) => image.file).filter(Boolean),
+        };
+        await createPost(postData);
+        navigate('/feed');
+      } catch (error) {
+        console.error('Error posting data:', error);
       }
     }
   };
@@ -99,14 +89,24 @@ const Edit = () => {
       <ImageUploadContainer>
         {images.map((image, index) => (
           <ImageUploadWrapper key={index}>
-            {index === 0 ? (
-              <ImagePosition>{index + 1}. (대표 사진)</ImagePosition>
-            ) : (
-              <ImagePosition>{index + 1}.</ImagePosition>
-            )}
-            <ImagePlaceholder onClick={() => triggerFileInput(index)}>
-              {image ? (
-                <UploadedImage src={image} alt={`Image ${index}`} />
+            <ImagePosition>
+              {index + 1}. {index === 0 && '(대표 사진)'}
+            </ImagePosition>
+            <ImagePlaceholder
+              onClick={() =>
+                document.getElementById(`input-file-${index}`).click()
+              }
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleUpload(e, index)}
+                id={`input-file-${index}`}
+                style={{ display: 'none' }}
+              />
+
+              {image.url ? (
+                <UploadedImage src={image.url} alt={`Image ${index}`} />
               ) : (
                 '+'
               )}
@@ -134,13 +134,6 @@ const Edit = () => {
           height="auto"
         />
       </EditorContainer>
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-        accept="image/*"
-      />
     </EditPageContainer>
   );
 };
@@ -225,7 +218,7 @@ const ImageUploadContainer = styled.div`
 `;
 
 const ImagePlaceholder = styled.div`
-  width: 100%; // Wrapper에 맞게 너비를 최대화
+  width: 100%;
   aspect-ratio: 3 / 5; // 종횡비 유지
   border: 2px solid #ddd;
   display: flex;

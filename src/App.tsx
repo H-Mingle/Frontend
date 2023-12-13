@@ -8,22 +8,32 @@ import Auth from './pages/Auth';
 import Edit from './pages/Edit';
 import Feed from './pages/Feed';
 import NotFound from './components/Common/NotFound';
+import { AuthProvider } from './context/AuthContext';
+import PrivateRoute from './components/Common/PrivateRoute';
+import React from 'react';
 
 function App() {
   return (
-    <div>
-      <Reset />
+    <AuthProvider>
+      <Reset /> {/* style reset */}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="/department-list" element={<DepartmentList />} />
         <Route path="/feed" element={<Feed />} />
-        <Route path="/mypage" element={<MyPage />} />
-        <Route path="/story" element={<Story />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route
+          path="/mypage"
+          element={
+            <PrivateRoute>
+              <MyPage />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/story/25" element={<Story />} />
         <Route path="/edit" element={<Edit />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </div>
+    </AuthProvider>
   );
 }
 

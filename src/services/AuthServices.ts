@@ -9,7 +9,7 @@ import { TokenStorage } from '../utils/TokenStorage';
 // OAuth2.0 로그인 URL 가져오기
 export const fetchOAuth2LoginUrl = async (redirectUrl: string) => {
   const response = await getOAuth2LoginUrl(redirectUrl);
-  window.location.href = response.data.oauthLink; // 구글 로그인 페이지로 리디렉션
+  return response.data.oauthLink; // 구글 로그인 페이지 URL 반환
 };
 
 // OAuth2.0 로그인
@@ -17,10 +17,14 @@ export const performOAuth2Login = async (
   redirectUrl: string,
   authorizationCode: string
 ) => {
-  const response = await loginOAuth2(redirectUrl, authorizationCode);
-  TokenStorage.setAccessToken(response.data.accessToken);
-  TokenStorage.setRefreshToken(response.data.refreshToken);
-  // 로그인 후 필요한 추가 처리 (예: 페이지 리디렉션 등)
+  try {
+    const response = await loginOAuth2(redirectUrl, authorizationCode);
+    TokenStorage.setAccessToken(response.data.accessToken);
+    TokenStorage.setRefreshToken(response.data.refreshToken);
+  } catch (error) {
+    console.error('Error during OAuth2 login:', error);
+    throw error;
+  }
 };
 
 // OAuth2.0 로그아웃

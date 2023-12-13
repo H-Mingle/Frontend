@@ -1,33 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DepartmentItem from '../components/DepartmentListPage/DepartmentItem';
+import { getChannels } from '../api/channels';
+import { DepartmentItemProps } from '../types/DepartmentItemProps';
+import { useAuth } from '../context/AuthContext';
 
 const DepartmentList = () => {
-  const navigate = useNavigate();
-  const tempDepartments = new Array(8).fill(null);
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
-  // 로그인 상태를 나타내는 상태 변수
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 초기값 false
+  const navigate = useNavigate();
+
+  // 채널 목록 상태 변수
+  const [departments, setDepartments] = useState<
+    DepartmentItemProps['department'][]
+  >([]);
+
+  // 서버에서 채널 데이터 fetch 함수
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const data = await getChannels();
+        if (Array.isArray(data)) {
+          setDepartments(data);
+        } else {
+          console.error('예상치 못한 데이터 형식:', data);
+        }
+      } catch (error) {
+        console.error('채널 데이터 가져오기 실패:', error);
+      }
+    };
+
+    fetchChannels();
+  }, []);
 
   return (
     <ListContainer>
       <NavigationBar>
         <BackButton onClick={() => navigate('/')}>Home</BackButton>
         <Title>Department List</Title>
-        {isLoggedIn ? (
+        {isAuthenticated ? (
           <MyPageButton onClick={() => navigate('/mypage')}>
             My Page
           </MyPageButton>
         ) : (
-          <AuthButton onClick={() => navigate('/auth')}>
+          <AuthButton
+            onClick={() => {
+              localStorage.setItem('previousPath', location.pathname);
+              navigate('/auth');
+            }}
+          >
             Login / Sign Up
           </AuthButton>
         )}
       </NavigationBar>
 
-      {tempDepartments.map((_, index) => (
-        <DepartmentItem key={index} />
+      {departments.map((department, index) => (
+        <DepartmentItem key={index} department={department} />
       ))}
     </ListContainer>
   );

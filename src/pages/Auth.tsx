@@ -1,56 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchOAuth2LoginUrl } from '../services/AuthServices'; // OAuth2 로그인 URL 요청 함수
+import { fetchOAuth2LoginUrl } from '../services/AuthServices';
+import { useAuth } from '../context/AuthContext';
 
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   const BackButton = styled(BackButtonContainer)``;
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
   };
 
+  // 구글 로그인 버튼 클릭 핸들러
   const handleGoogleLogin = async () => {
     try {
-      await fetchOAuth2LoginUrl(`http://localhost:3000${location.pathname}`);
+      const oauthUrl = await fetchOAuth2LoginUrl(
+        `http://localhost:3000${location.pathname}`
+      );
+      window.location.href = oauthUrl; // 구글 로그인 페이지로 리디렉션
     } catch (error) {
       console.error('Error fetching OAuth2 login URL:', error);
     }
   };
 
+  // URL에 authorizationCode가 있는 경우 로그인 처리
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate(-1);
+    const urlParams = new URLSearchParams(window.location.search);
+    const authorizationCode = urlParams.get('code');
+
+    if (authorizationCode) {
+      login(`http://localhost:3000${location.pathname}`, authorizationCode)
+        .then(() => {
+          console.log('Login successful!');
+          const previousPath = localStorage.getItem('previousPath') || '/';
+          navigate(previousPath);
+        })
+        .catch((error) => {
+          console.error('Error during login:', error);
+        });
     }
-  }, [isLoggedIn, navigate]);
-
-  const [activeImage, setActiveImage] = useState(0); // 현재 활성화된 이미지의 인덱스
-  const images = [
-    '/images/carousel/1.png',
-    '/images/carousel/2.png',
-    '/images/carousel/3.png',
-    '/images/carousel/4.png',
-    '/images/carousel/5.png',
-    '/images/carousel/6.png',
-    '/images/carousel/7.png',
-    '/images/carousel/8.png',
-    '/images/carousel/9.png',
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveImage(
-        (prevActiveImage) => (prevActiveImage + 1) % images.length
-      );
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [images.length]);
+  }, [location, login, navigate]);
 
   return (
     <AuthPageContainer>

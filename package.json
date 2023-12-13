@@ -2,7 +2,7 @@
   "name": "h-mingle",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:8083",
+  "proxy": "http://3.34.190.110:8080/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^11.2.7",

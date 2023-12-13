@@ -5,6 +5,7 @@ import { TabProps } from '../types/TabProps';
 import { carouselImageData } from '../constants/HomePage/carouselImageData'; // 이미지 데이터 임포트
 import { ModalContainerProps } from '../types/ModalContainerProps';
 import { ModalBackgroundProps } from '../types/ModalBackgroundProps';
+import { useAuth } from '../context/AuthContext';
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -17,8 +18,7 @@ const MyPage = () => {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<string[]>([]);
 
-  // 개발 중이라 로그인 상태를 true로 설정 실제로는 false로 설정 해야함
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const { isAuthenticated, logout } = useAuth();
 
   const [selectedProfileImage, setSelectedProfileImage] = useState<
     string | null
@@ -65,10 +65,10 @@ const MyPage = () => {
 
   useEffect(() => {
     // 로그인 상태가 아닐 경우 로그인 페이지로 리디렉트
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       navigate('/auth');
     }
-  }, [isLoggedIn, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // 스크롤 이벤트 핸들러와 데이터 로드 로직
   useEffect(() => {
@@ -149,7 +149,7 @@ const MyPage = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <ModalButton onClick={handleContactClick}>문의하기</ModalButton>
-          <ModalButton>로그아웃</ModalButton>
+          <ModalButton onClick={logout}>로그아웃</ModalButton>
           <DeleteAccountButton>회원탈퇴</DeleteAccountButton>
         </ModalContainer>
       </ModalBackground>

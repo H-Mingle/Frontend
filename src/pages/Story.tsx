@@ -1,28 +1,190 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  getPost,
+  getPostImages,
+  addLike,
+  removeLike,
+  getComments,
+  createReply,
+  updateReply,
+  deleteReply,
+} from '../api/posts';
 import styled, { keyframes } from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { StoryData } from '../types/StoryData';
+import { CommentData } from '../types/CommentData';
+import { Viewer } from '@toast-ui/react-editor';
+import '@toast-ui/editor/dist/toastui-editor-viewer.css';
 
 const Story = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, userId } = useAuth(); // 인증된 사용자의 ID 가져오기
 
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  // const { id } = useParams(); // 게시글 ID
+  const id = 25; // 임시 게시글 ID
+  const [post, setPost] = useState<StoryData | null>(null); // 게시글 데이터 상태
+  const [images, setImages] = useState([]); // 이미지 데이터 상태
+  const [comments, setComments] = useState<CommentData[]>([]);
+  const [commentInput, setCommentInput] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editCommentInput, setEditCommentInput] = useState('');
+  // 페이지 상태와 댓글 로딩 상태를 추적하기 위한 useState 추가
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
   };
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetchPostData(id); // 게시글 데이터 가져오기
+    fetchPostImages(id); // 이미지 데이터 가져오기
+    fetchComments(id, 1); // 댓글 데이터 가져오기
+  }, [id]);
+
+  const fetchPostData = async (postId) => {
+    const postData = await getPost(postId);
+    if (postData.data) {
+      setPost(postData.data);
+    }
+  };
+
+  // 이미지 데이터 가져오는 함수
+  const fetchPostImages = async (postId) => {
+    const imageData = await getPostImages(postId);
+    if (imageData && Array.isArray(imageData.data)) {
+      setImages(imageData.data); // 서버에서 받은 데이터가 배열이면 상태에 설정
+    } else {
+      setImages([]); // 배열이 아니면 빈 배열로 설정
+    }
+  };
+
+  const fetchComments = async (postId, page) => {
+    setLoading(true);
+    const commentsData = await getComments(postId, page, 5, null);
+    if (commentsData && commentsData.data) {
+      if (page === 1) {
+        // 첫 페이지일 경우 댓글 전체를 교체
+        setComments(commentsData.data);
+      } else {
+        // 두 번째 페이지 이후일 경우 기존 댓글 리스트에 추가
+        setComments((prevComments) => [...prevComments, ...commentsData.data]);
+      }
+      setPage(page + 1);
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!post) return; // 게시물 데이터가 없으면 작업을 수행하지 않음
+
+    try {
+      if (post.liked) {
+        await removeLike(post.postId); // 좋아요 취소 API 호출
+        setPost({ ...post, heartCount: post.heartCount - 1, liked: false }); // 상태 업데이트
+      } else {
+        await addLike(post.postId); // 좋아요 추가 API 호출
+        setPost({ ...post, heartCount: post.heartCount + 1, liked: true }); // 상태 업데이트
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
+  // 스크롤 이벤트 핸들러
+  const handleScroll = () => {
+    const atBottom =
+      window.innerHeight + window.scrollY > document.body.offsetHeight;
+    if (atBottom && !loading) {
+      fetchComments(id, page);
+    }
+  };
+
+  useEffect(() => {
+    console.log('post:', post);
+  }, [post]);
+
+  useEffect(() => {
+    console.log(comments);
+  }, [comments]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, page, id]);
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (commentInput.trim()) {
+      await handleCreateComment(commentInput);
+      setCommentInput(''); // Clear input field after submission
+    }
+  };
+
+  const handleCreateComment = async (content, parentId = null) => {
+    // 댓글 작성 로직
+    try {
+      const response = await createReply(id, content, parentId);
+      const newComment = response.data;
+      if (newComment) {
+        setComments((prevComments) => [...prevComments, newComment]);
+      }
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    }
+  };
+
+  const handleUpdateComment = async (replyId: number, content: string) => {
+    try {
+      await updateReply(id, replyId, content); // 서버에서 수정 로직을 처리하는 함수 호출
+      // 댓글 수정 시 해당 댓글만 업데이트
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment.id === replyId ? { ...comment, content } : comment
+        )
+      );
+      setEditingCommentId(null); // Reset editing state
+      setEditCommentInput(''); // Clear edit input
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (replyId: number) => {
+    try {
+      // 댓글 삭제 로직
+      await deleteReply(id, replyId); // 서버에서 삭제 로직을 처리하는 함수 호출
+      // 댓글 삭제 시 해당 댓글만 제거
+      setComments((prevComments) =>
+        prevComments.filter((comment) => comment.id !== replyId)
+      );
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const initiateEditComment = (comment: CommentData) => {
+    setEditingCommentId(comment.id);
+    setEditCommentInput(comment.content);
+  };
+
+  const handleEditCommentSubmit = async (replyId: number) => {
+    await handleUpdateComment(replyId, editCommentInput);
+    setEditingCommentId(null); // Reset editing state
+    setEditCommentInput(''); // Clear edit input
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditCommentInput('');
+  };
+
   // 이미지 확대를 위한 상태 (문자열 또는 null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const tmp_text =
-    '얼마 만에 도심 속 대형 복합 쇼핑몰에 와보는 건지 모릅니다. 아이를 낳고 키우며, 일하며 바쁘다는 핑계로 이런 여가생활을 게을리한 것 같습니다. 이날 여기서 찍은 사진만 100장이 넘을 듯합니다. 아무 데서나 찍어도 전부 포토존입니다. 5. 6층에는 숲속 정원과 함께 셀카를 찍을 수 있는 포토 스팟이 곳곳에 있습니다. 인생 사진을 남길 수 있습니다. 아이들이 좋아하는 마시멜로우 팝업샵부터 레고, 플레이 인 더 박스 등 주머니가 열려야 하는 곳도 많습니다. 그리고 추억의 LP 판을 판매하고 들어볼 수 있는 공간도 있었습니다. 앉아서 책도 읽을 수 있습니다. 진짜 없는 것이 없습니다. 더운 여름날, 비가 오는 장마철, 아이와 아침부터 방문해서 하루 종일 놀다 가도 지루하지 않을 것 같습니다. 하지만 다음엔 꼭 아이 없이 친구들과 방문해 더 많은 것들을 즐기고 느끼고 맛보고 싶어지네요~^^ 야외활동이 어려운 날엔 더 현대 서울로 몰캉스를 떠나보시길 추천드립니다~!! ';
-
-  // 임시 이미지 배열
-  const images = [
-    '/images/carousel/1.png',
-    '/images/carousel/2.png',
-    '/images/carousel/3.png',
-    '/images/carousel/4.png',
-  ];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,9 +194,9 @@ const Story = () => {
     <StoryPageWrapper>
       <NavigationBar>
         <BackButton onClick={handleBack}>Back</BackButton>
-        <Title>더현대 서울(여의도)</Title>
+        <ChannelName>{post && post.channelName}</ChannelName>
         <NavigationRightSection>
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
               <ProfileImageContainer onClick={() => navigate('/mypage')}>
@@ -42,36 +204,50 @@ const Story = () => {
               </ProfileImageContainer>
             </div>
           ) : (
-            <AuthButton onClick={() => navigate('/auth')}>
+            <AuthButton
+              onClick={() => {
+                localStorage.setItem('previousPath', location.pathname);
+                navigate('/auth');
+              }}
+            >
               Login / Sign Up
             </AuthButton>
           )}
         </NavigationRightSection>
       </NavigationBar>
       <ArrowContainer>
-        {/* TODO: 현재는 임시로 /department-list로 라우팅 되게 했음. 나중에 서버 작업 하면서 이전 게시물, 다음 게시물로 이동 */}
-        <Arrow direction="left" onClick={() => navigate('/department-list')} />
-        <Arrow direction="right" onClick={() => navigate('/department-list')} />
+        <Arrow
+          direction="left"
+          onClick={() => navigate(`/story/${post && post.previousId}`)}
+        />
+        <Arrow
+          direction="right"
+          onClick={() => navigate(`/story/${post && post.subsequentId}`)}
+        />
       </ArrowContainer>
       <StoryContainer>
-        <PostDate>2023년 3월 15일 14:30</PostDate>
+        <PostDate>{post && post.createdDate}</PostDate>
         <ImagesContainer>
           {images.map((image, index) => (
             <ImagePreview
               key={index}
-              src={image}
-              alt={`Preview ${index + 1}`}
               onClick={() => setSelectedImage(image)}
               zigzag={index % 2 === 0}
-            />
+            >
+              <StyledImage
+                src={`data:image/jpeg;base64,${image}`}
+                alt="Description"
+              />
+            </ImagePreview>
           ))}
         </ImagesContainer>
-        {/* 임시 조회수 및 좋아요 */}
         <Statistics>
-          <ViewCount>👀 1234</ViewCount>
-          <LikeCount>🫶 567</LikeCount>
+          <ViewCount>👀 {post && post.readCount}</ViewCount>
+          <LikeCount onClick={handleLike}>
+            🫶 {post && post.heartCount}
+          </LikeCount>
           <StatisticsRightSection onClick={() => navigate('/mypage')}>
-            <Username>nickname</Username> {/* 사용자 닉네임 */}
+            <Username>{post && post.nickname}</Username>
             <ProfileImageContainerForWriter>
               <ProfileImageForWriter
                 src="/images/carousel/1.png"
@@ -81,61 +257,88 @@ const Story = () => {
           </StatisticsRightSection>
         </Statistics>
         <TextContent>
-          {tmp_text} <br /> {tmp_text}
+          {post ? (
+            <Viewer initialValue={post.content} />
+          ) : (
+            '[H-Mingle]: 내용이 없습니다.'
+          )}
         </TextContent>
         <CommentsContainer>
-          <CommentForm>
-            <CommentInput type="text" placeholder="댓글을 입력하세요..." />
+          <CommentForm onSubmit={handleCommentSubmit}>
+            <CommentInput
+              placeholder="댓글을 입력하세요..."
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+            />
             <CommentButton type="submit">Comment</CommentButton>
           </CommentForm>
           <CommentList>
-            <CommentItem>
-              <ProfileImageContainerForComment
-                onClick={() => navigate('/mypage')}
-              >
-                <ProfileImageForComment
-                  src="/images/carousel/1.png"
-                  alt="Profile"
-                />
-              </ProfileImageContainerForComment>
-              <CommentDetails>
-                <UsernameForComment>닉네임</UsernameForComment>
-                <CommentText>
-                  너무 멋져요! <br /> 저도 꼭 가볼게요!{' '}
-                </CommentText>
-                <CommentMetadata>
-                  <span>1시간 전</span>
-                  <LikeButton>🫶 12</LikeButton>
-                  <ReplyButton>답글 쓰기</ReplyButton>
-                </CommentMetadata>
-              </CommentDetails>
-            </CommentItem>
-
-            <SubCommentItem>
-              <ProfileImageContainerForComment
-                onClick={() => navigate('/mypage')}
-              >
-                <ProfileImageForComment
-                  src="/images/carousel/1.png"
-                  alt="Profile"
-                />
-              </ProfileImageContainerForComment>
-              <CommentDetails>
-                <UsernameForComment>닉네임</UsernameForComment>
-                <CommentText>정말 멋진 곳이네요!</CommentText>
-                <CommentMetadata>
-                  <span>30분 전</span>
-                  <LikeButton>🫶 8</LikeButton>
-                </CommentMetadata>
-              </CommentDetails>
-            </SubCommentItem>
+            {comments.map((comment: CommentData) => (
+              <CommentItem key={comment.id}>
+                <ProfileImageContainerForComment
+                  onClick={() => navigate('/mypage')}
+                >
+                  <ProfileImageForComment
+                    src="/images/carousel/1.png"
+                    alt="Profile"
+                  />
+                </ProfileImageContainerForComment>
+                <CommentDetails>
+                  <UsernameForComment>{comment.nickname}</UsernameForComment>
+                  {editingCommentId === comment.id ? (
+                    // 수정 중일 때의 UI
+                    <div>
+                      <input
+                        type="text"
+                        value={editCommentInput}
+                        onChange={(e) => setEditCommentInput(e.target.value)}
+                      />
+                      <EditButtonsForCommentEditMode>
+                        <button
+                          onClick={() => handleEditCommentSubmit(comment.id)}
+                        >
+                          Save
+                        </button>
+                        <button onClick={handleCancelEdit}>Cancel</button>
+                      </EditButtonsForCommentEditMode>
+                    </div>
+                  ) : (
+                    // 일반적인 댓글 표시 UI
+                    <div>
+                      <CommentText>{comment.content}</CommentText>
+                      <CommentMetadata>
+                        <span>{comment.recent}</span>
+                        {comment.writer && isAuthenticated && (
+                          <div>
+                            <CommentEditButton
+                              onClick={() => initiateEditComment(comment)}
+                            >
+                              Edit
+                            </CommentEditButton>
+                            <span>·</span>
+                            <CommentEditButton
+                              onClick={() => handleDeleteComment(comment.id)}
+                            >
+                              Delete
+                            </CommentEditButton>
+                          </div>
+                        )}
+                      </CommentMetadata>
+                    </div>
+                  )}
+                </CommentDetails>
+              </CommentItem>
+            ))}
           </CommentList>
         </CommentsContainer>
       </StoryContainer>
       {/* 이미지 확대 뷰 */}
       {selectedImage && (
         <ImageModal onClick={() => setSelectedImage(null)}>
-          <img src={selectedImage} alt="Selected" />
+          <img
+            src={`data:image/jpeg;base64,${selectedImage}`}
+            alt="Selected_Image"
+          />
         </ImageModal>
       )}
     </StoryPageWrapper>
@@ -162,7 +365,7 @@ const NavigationBar = styled.div`
   box-sizing: border-box;
 `;
 
-const Title = styled.h1`
+const ChannelName = styled.h1`
   font-size: 2.5rem;
   font-weight: bold;
   color: #333;
@@ -224,11 +427,12 @@ const bounce = keyframes`
   90% { transform: translateY(-1px); }
 `;
 
-const ImagePreview = styled.img<{ zigzag?: boolean }>`
+const ImagePreview = styled.div<{ zigzag?: boolean }>`
   width: calc(100% / 4 - 2%); // 네 개의 이미지를 나타내기 위한 가로 너비
   height: 100%; // 높이 자동 조정
   aspect-ratio: 3 / 5;
   object-fit: cover;
+  overflow: hidden;
   margin: ${({ zigzag }) => (zigzag ? '0 1% 1% 1%' : '4% 1% 0 1%')};
   cursor: pointer;
   border-radius: 8px;
@@ -239,6 +443,12 @@ const ImagePreview = styled.img<{ zigzag?: boolean }>`
     animation: ${bounce} 0.8s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
+`;
+
+const StyledImage = styled.img`
+  width: 100%; // 컨테이너 너비에 맞춤
+  height: 100%; // 컨테이너 높이에 맞춤
+  object-fit: cover; // 컨테이너를 채우면서 비율 유지
 `;
 
 const ImageModal = styled.div`
@@ -409,13 +619,20 @@ const CommentForm = styled.form`
 
 const CommentButton = styled(Button)`
   margin-left: 1rem;
+  align-self: stretch;
 `;
 
-const CommentInput = styled.input`
+const CommentInput = styled.textarea`
   width: 100%;
-  padding: 0.8rem;
+  padding: 0.4rem;
   border: 1px solid #ddd;
   border-radius: 8px;
+  resize: vertical;
+  margin-right: 1rem;
+  flex: 1;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  line-height: 1.2;
 `;
 
 const CommentList = styled.ul`
@@ -460,41 +677,68 @@ const CommentDetails = styled.div`
 const UsernameForComment = styled.div`
   font-weight: bold;
   margin-bottom: 0.5rem;
+  font-size: 1rem;
 `;
 
 const CommentText = styled.span`
   display: block;
   line-height: 1.3;
   margin-bottom: 0.5rem;
+  white-space: pre-wrap; // 줄바꿈과 공백 유지
 `;
 
 const CommentMetadata = styled.div`
   display: flex;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   color: #666;
-  align-items: center;
 `;
 
 const LikeButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-
   color: #666;
+  margin-top: -0.1rem;
+
+  &:hover {
+    color: black;
+  }
 `;
 
-const ReplyButton = styled(LikeButton)`
+const CommentEditButton = styled(LikeButton)`
   background: none;
   border: none;
   cursor: pointer;
-
   color: #666;
+  /* margin-left: 0.5rem; */
 `;
 
-const SubCommentItem = styled(CommentItem)`
-  margin-left: 4rem;
-  border-bottom: none;
+const EditButtonsForCommentEditMode = styled.div`
+  display: flex;
+  margin-top: 0.5rem;
+
+  button {
+    margin-right: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+
+    &:hover {
+      background-color: black;
+      transform: scale(1.03);
+    }
+  }
 `;
+
+// const SubCommentItem = styled(CommentItem)`
+//   margin-left: 4rem;
+//   border-bottom: none;
+// `;
 
 export default Story;

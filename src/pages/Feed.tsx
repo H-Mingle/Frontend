@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GridItemProps } from '../types/GridItemProps';
 import { carouselImageData } from '../constants/HomePage/carouselImageData';
+import { useAuth } from '../context/AuthContext';
 
 const Feed = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isAuthenticated } = useAuth();
   const [images, setImages] = useState<string[]>([]); // 이미지 데이터를 저장할 상태 (임시로 carouselImageData를 사용)
 
   useEffect(() => {
@@ -19,9 +21,6 @@ const Feed = () => {
   }, []);
 
   const isLargeImage = (index: any) => {
-    // 12개 이미지마다 패턴이 반복되도록 조건 설정
-    // 첫 번째 패턴: index 2, 3
-    // 두 번째 패턴: index 8, 9
     return index % 10 === 2 || index % 10 === 5;
   };
 
@@ -64,15 +63,27 @@ const Feed = () => {
         </BackButton>
         <Title>Feed</Title>
         <NavigationRightSection>
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <div>
-              <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
+              <EditButton
+                onClick={() => {
+                  localStorage.setItem('channelId', '1');
+                  navigate('/edit');
+                }}
+              >
+                Edit
+              </EditButton>
               <MyPageButton onClick={() => navigate('/mypage')}>
                 My Page
               </MyPageButton>
             </div>
           ) : (
-            <AuthButton onClick={() => navigate('/auth')}>
+            <AuthButton
+              onClick={() => {
+                localStorage.setItem('previousPath', location.pathname);
+                navigate('/auth');
+              }}
+            >
               Login / Sign Up
             </AuthButton>
           )}
@@ -179,7 +190,7 @@ const GridItem = styled.div<GridItemProps>`
     grid-column-end: span 1;
     grid-row-end: span 2;
     padding-top: 200%; // 1:2 비율
-  `}
+    `}
 
   img {
     position: absolute;

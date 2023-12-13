@@ -1,26 +1,21 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
+    "outDir": "./build/js", // ts 컴파일 후에 어느 경로로 들어가는지 명시
+    "target": "ES2015", // 타입스크립트를 ES2015 버전의 자바스크립트로 변환
+    "noEmitOnError": true, // 파일에 에러가 있을 때는 컴파일하지 않는 옵션
+    "module": "ESNext", // 모듈 시스템을 사용할 지
+    "moduleResolution": "Node",
+    "esModuleInterop": true, // ESM(ES Module), CommonJS 호환해서 사용 가능
+    "lib": ["ESNext", "DOM"], // 컴파일 과정에서 사용하는 라이브러리 지정
+    "strict": true // 타입스크립트 파일에 타입을 엄격하게 사용한다고 명시
   },
   "include": [
-    "src"
+    // 소스 파일의 어디에서 타입스크립트 파일을 찾을 수 있는지 명시
+    "src/**/*.ts", // glob src 폴더안에 모든 하위 경로 **, 모든 ts 파일
+    "api/**/*/ts"
+  ],
+  "exclude": [
+    // 컴파일 시 제외할 목록
+    "node_modules"
   ]
 }

@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios';
 export const getChannels = async () => {
   try {
     const response = await axios.get('/channels');
-    return response.data;
+    return response.data.data;
   } catch (error) {
     if (isAxiosError(error)) {
       // Axios 관련 오류 처리

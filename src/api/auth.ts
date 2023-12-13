@@ -4,11 +4,10 @@ import { isAxiosError } from 'axios';
 // OAuth2.0 로그인 URL 요청
 export const getOAuth2LoginUrl = async (redirectUrl: string) => {
   try {
-    console.log('redirectUrl: ', redirectUrl);
+    console.log('redirectUrl in getOAuth: ', redirectUrl);
     const response = await axios.get('/oauth2/login', {
       params: { redirectUrl },
     });
-    console.log('response: ', response);
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
