@@ -6,6 +6,5 @@ export interface CommentData {
   recent: string;
   parentId: number | null;
   memberId: number;
-  image: string | null; // byte
   writer: boolean;
 }

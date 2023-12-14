@@ -27,6 +27,8 @@ const DepartmentList = () => {
         } else {
           console.error('예상치 못한 데이터 형식:', data);
         }
+
+        console.log(data);
       } catch (error) {
         console.error('채널 데이터 가져오기 실패:', error);
       }
@@ -56,9 +58,11 @@ const DepartmentList = () => {
         )}
       </NavigationBar>
 
-      {departments.map((department, index) => (
-        <DepartmentItem key={index} department={department} />
-      ))}
+      <DepartmentListContainer>
+        {departments.map((department, index) => (
+          <DepartmentItem key={index} department={department} index={index} />
+        ))}
+      </DepartmentListContainer>
     </ListContainer>
   );
 };
@@ -81,6 +85,10 @@ const Title = styled.h1`
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+`;
+
+const DepartmentListContainer = styled.div`
+  margin: 0 8.8rem;
 `;
 
 const Button = styled.button`

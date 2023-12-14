@@ -78,28 +78,25 @@ export const removeLike = async (postId: number) => {
 };
 
 // 스토리 리스트 조회
-export const getPosts = async (page: number, size: number) => {
+export const getPosts = async (
+  page: number,
+  size: number,
+  channelID: number
+) => {
   try {
     const response = await axios.get('/posts', {
       params: { page, size },
       headers: {
         'Content-Type': 'application/json',
-        'X-Auth-id': '1', // channelId에 해당하는 값
+        channel: channelID,
       },
     });
 
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      // 서버로부터의 응답 오류 처리
-      if (error.response) {
-        console.error('Response error:', error.response.data);
-      } else {
-        console.error('Error:', error.message);
-      }
-    } else {
-      // 알 수 없는 오류 처리
-      console.error('Unknown error:', error);
+      // 에러 처리
+      console.error('Error:', error.response?.data || error.message);
     }
   }
 };
@@ -232,5 +229,88 @@ export const deleteReply = async (postId: number, replyId: number) => {
         error.response?.data || error.message
       );
     }
+  }
+};
+
+export const getUserDetails = async (memberId: any) => {
+  try {
+    const response = await axios.get(`/members/${memberId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    // 오류 처리
+    console.error('Error fetching user details:', error);
+  }
+};
+
+export const updateUserDetails = async (
+  memberId: number,
+  nickname: string,
+  introduction: string
+) => {
+  try {
+    console.log(nickname, introduction);
+    const response = await axios.patch(`/members/${memberId}`, {
+      memberId,
+      nickname,
+      introduction,
+    });
+    return response.data;
+  } catch (error) {
+    // 오류 처리
+    console.error('Error updating user details:', error);
+  }
+};
+
+export const updateUserImage = async (imageFile: File) => {
+  const formData = new FormData();
+  formData.append('image', imageFile, imageFile.name);
+
+  try {
+    const response = await axios.patch('/members/images', formData, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user image:', error);
+    throw error;
+  }
+};
+
+// 사용자가 작성한 게시글 리스트 조회
+export const getUserPosts = async (
+  memberId: number,
+  page: number,
+  size: number
+) => {
+  try {
+    const response = await axios.get(`/members/${memberId}/posts`, {
+      params: { page, size },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+  }
+};
+
+// 사용자가 좋아요한 게시글 리스트 조회
+export const getUserLikedPosts = async (
+  memberId: number,
+  page: number,
+  size: number
+) => {
+  try {
+    const response = await axios.get(`/members/${memberId}/posts/like`, {
+      params: { page, size },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user liked posts:', error);
   }
 };

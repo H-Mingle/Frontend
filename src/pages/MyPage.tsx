@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, ChangeEvent } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { TabProps } from '../types/TabProps';
@@ -6,27 +6,52 @@ import { carouselImageData } from '../constants/HomePage/carouselImageData'; // 
 import { ModalContainerProps } from '../types/ModalContainerProps';
 import { ModalBackgroundProps } from '../types/ModalBackgroundProps';
 import { useAuth } from '../context/AuthContext';
+import {
+  getUserDetails,
+  getUserLikedPosts,
+  getUserPosts,
+  updateUserDetails,
+  updateUserImage,
+} from '../api/posts';
+import { UserData } from '../types/UserData';
+import { PostDataForMyPage } from '../types/PostData';
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
 
-  // 프로필 이미지 상태 관리
-  const [profileImage, setProfileImage] = useState<string>(
-    '/images/carousel/2.png'
-  );
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [profile, setProfile] = useState<UserData | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [images, setImages] = useState<string[]>([]);
 
-  const { isAuthenticated, logout } = useAuth();
+  const [posts, setPosts] = useState<PostDataForMyPage[]>([]);
+  const [likedPosts, setLikedPosts] = useState<PostDataForMyPage[]>([]);
+
+  // 사용자 상세 정보를 가져오고 상태에 저장하는 로직
+  const fetchUserProfile = async () => {
+    const userData = await getUserDetails(1);
+    if (userData.data) {
+      setProfile(userData.data);
+    }
+
+    console.log(userData.data);
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const [images, setImages] = useState([]);
+
+  const getDefaultImage = () => {
+    return '/images/userDefault/userDefault.png'; // 기본 이미지 경로
+  };
 
   const [selectedProfileImage, setSelectedProfileImage] = useState<
     string | null
   >(null);
-
-  const handleProfileImageClick = () => {
-    setSelectedProfileImage(profileImage);
-  };
 
   // 탭 상태 관리
   const [activeTab, setActiveTab] = useState('posts');
@@ -36,15 +61,59 @@ const MyPage = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
+  // 프로필 이미지 변경 핸들러
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      alert('이미지를 선택해주세요.');
+      return;
+    }
+
+    try {
+      const response = await updateUserImage(file);
+      if (response.success) {
+        fetchUserProfile(); // 프로필 정보 업데이트
+      } else {
+        alert('이미지 업데이트 실패: ' + response.message);
+      }
+    } catch (error) {
+      console.error('이미지 업로드 중 오류 발생:', error);
+      alert('이미지 업로드에 실패했습니다.');
+    }
+  };
+
+  // 사용자 정보 업데이트 핸들러
+  const handleEditComplete = async () => {
+    if (!username.trim() || !bio.trim()) {
+      alert('닉네임과 소개는 비워둘 수 없습니다.');
+      return;
+    }
+
+    try {
+      // API 호출을 통한 사용자 정보 업데이트
+      const updateResponse = await updateUserDetails(1, username, bio);
+      if (updateResponse && updateResponse.success) {
+        // 성공 시, 프로필 정보를 새로고침
+        fetchUserProfile();
+        setIsEditing(false);
+      } else {
+        alert('업데이트에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('Error updating user details:', error);
+      alert('업데이트 중 오류가 발생했습니다.');
+    }
+  };
+
   // 편집 모드 토글 함수
   const toggleEditMode = () => {
     setIsEditing(!isEditing);
-  };
 
-  // 편집 완료 핸들러
-  const handleEditComplete = () => {
-    // 편집 완료 로직 (예: API 호출 등)
-    toggleEditMode();
+    // 편집 모드로 진입할 때 현재 프로필 정보로 상태를 설정
+    if (!isEditing) {
+      setUsername(profile?.nickname || '');
+      setBio(profile?.introduction || '');
+    }
   };
 
   // 입력 핸들러
@@ -56,14 +125,6 @@ const MyPage = () => {
   };
 
   useEffect(() => {
-    const repeatedData = Array(1)
-      .fill(carouselImageData)
-      .flat()
-      .map((image) => image.src);
-    setImages(repeatedData);
-  }, []);
-
-  useEffect(() => {
     // 로그인 상태가 아닐 경우 로그인 페이지로 리디렉트
     if (!isAuthenticated) {
       navigate('/auth');
@@ -73,67 +134,105 @@ const MyPage = () => {
   // 스크롤 이벤트 핸들러와 데이터 로드 로직
   useEffect(() => {
     const handleScroll = () => {
-      // 문서의 총 높이
       const totalPageHeight = document.documentElement.scrollHeight;
-
-      // 현재 스크롤 위치 (스크롤이 내려간 거리 + 현재 보이는 화면의 높이)
       const currentScrollPosition =
         window.innerHeight + document.documentElement.scrollTop;
 
-      // 문서 끝에 거의 도달했는지 확인
       if (totalPageHeight - currentScrollPosition < 100) {
-        // 추가 이미지 데이터 로드
         loadMoreImages();
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [images]);
+  }, []);
 
   const loadMoreImages = () => {
-    // 기존 이미지 목록에 추가 이미지 데이터 연결
-    const newImageSources = Array(1)
-      .fill(carouselImageData)
-      .flat()
-      .map((image) => image.src);
-
-    setImages((prevImages) => [...prevImages, ...newImageSources]);
+    setCurrentPage((prevPage) => prevPage + 1);
   };
 
-  // 이미지 업로드 핸들러
-  const handleImageUpload = (event: any) => {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl);
-    }
+  // 편집 취소 핸들러
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    // 현재 프로필 정보로 초기화
+    setUsername(profile?.nickname || '');
+    setBio(profile?.introduction || '');
   };
 
-  // 이미지 업로드 트리거 함수
-  const triggerImageUpload = () => {
-    if (imageInputRef.current) {
-      imageInputRef.current.click();
-    }
-  };
-
-  const handleProfileImageChangeClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevents click from bubbling up to the profile image wrapper
-    if (imageInputRef.current) {
-      imageInputRef.current.click();
+  const handleProfileImageClick = () => {
+    if (selectedProfileImage) {
+      setSelectedProfileImage(null);
+    } else {
+      setSelectedProfileImage(profile?.image?.toString() || getDefaultImage());
     }
   };
 
   // 문의하기 버튼 클릭 핸들러
   const handleContactClick = () => {
-    window.open('https://www.instagram.com/flamozzi/', '_blank');
+    window.open('https://www.instagram.com/Mingle_Hyundai/', '_blank');
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const handleExtraFunctionMessage = async () => {
+    window.confirm('추가 구현 예정입니다. 🙂');
+  };
+
+  const fetchUserPosts = async () => {
+    const response = await getUserPosts(1, currentPage, 9);
+    if (response && Array.isArray(response.data.post)) {
+      const newPosts = response.data.post.map((post) => ({
+        id: post.id,
+        image: post.image,
+      }));
+      setPosts((prevPosts) => {
+        // 중복된 아이템이 없는 새로운 아이템만 추가
+        const updatedPosts = newPosts.filter(
+          (newPost) => !prevPosts.some((prevPost) => prevPost.id === newPost.id)
+        );
+        return [...prevPosts, ...updatedPosts];
+      });
+    }
+  };
+
+  const fetchUserLikedPosts = async () => {
+    const response = await getUserLikedPosts(1, currentPage, 10);
+    if (response && Array.isArray(response.data.post)) {
+      const newLikedPosts = response.data.post.map((post) => ({
+        id: post.id,
+        image: post.image,
+      }));
+      setLikedPosts((prevLikedPosts) => {
+        // 중복된 아이템이 없는 새로운 아이템만 추가
+        const updatedLikedPosts = newLikedPosts.filter(
+          (newLikedPost) =>
+            !prevLikedPosts.some(
+              (prevLikedPost) => prevLikedPost.id === newLikedPost.id
+            )
+        );
+        return [...prevLikedPosts, ...updatedLikedPosts];
+      });
+    }
+  };
+
+  // 탭 상태 관리 및 탭 변경 핸들러
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'posts') {
+      fetchUserPosts();
+    } else if (activeTab === 'likes') {
+      fetchUserLikedPosts();
+    }
+  }, [activeTab, currentPage]);
+
+  const displayImages = activeTab === 'posts' ? posts : likedPosts;
 
   return (
     <MyPageContainer>
@@ -150,19 +249,27 @@ const MyPage = () => {
         >
           <ModalButton onClick={handleContactClick}>문의하기</ModalButton>
           <ModalButton onClick={logout}>로그아웃</ModalButton>
-          <DeleteAccountButton>회원탈퇴</DeleteAccountButton>
+          <DeleteAccountButton onClick={handleExtraFunctionMessage}>
+            회원탈퇴
+          </DeleteAccountButton>
         </ModalContainer>
       </ModalBackground>
 
       <BodyContainer>
         <ProfileSection>
-          {/* 조건부 렌더링을 사용하여 프로필 이미지 표시 */}
-          <ProfileImageWrapper onClick={handleProfileImageClick}>
+          <ProfileImageWrapper>
             <ProfileImage
-              src={profileImage || '/public/images/carousel/2.png'}
+              src={
+                profile?.image
+                  ? `data:image/jpeg;base64,${profile.image}`
+                  : getDefaultImage()
+              }
               alt="Profile"
+              onClick={handleProfileImageClick}
             />
-            <ProfileImageChangeButton onClick={handleProfileImageChangeClick}>
+            <ProfileImageChangeButton
+              onClick={() => imageInputRef.current?.click()}
+            >
               +
             </ProfileImageChangeButton>
           </ProfileImageWrapper>
@@ -174,15 +281,18 @@ const MyPage = () => {
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
-            style={{ display: 'none' }} // 숨김 처리
+            style={{ display: 'none' }}
           />
 
           <ProfileInfo>
             <ProfileInfoHeader>
               {isEditing ? (
-                <EditCompleteButton onClick={handleEditComplete}>
-                  저장
-                </EditCompleteButton>
+                <>
+                  <CancelButton onClick={handleEditCancel}>취소</CancelButton>
+                  <EditCompleteButton onClick={handleEditComplete}>
+                    저장
+                  </EditCompleteButton>
+                </>
               ) : (
                 <EditButton onClick={toggleEditMode}>✎</EditButton>
               )}
@@ -199,52 +309,51 @@ const MyPage = () => {
               </EditingContainer>
             ) : (
               <>
-                <DisplayName className={isEditing ? 'hidden' : ''}>
-                  {username}
-                </DisplayName>
-                <DisplayBio className={isEditing ? 'hidden' : ''}>
-                  {bio}
-                </DisplayBio>
+                <DisplayName>{profile?.nickname}</DisplayName>
+                <DisplayBio>{profile?.introduction}</DisplayBio>
               </>
             )}
 
-            <PostsCount>게시물: 10</PostsCount>
+            <PostsCount>게시물: {profile?.postCount}</PostsCount>
           </ProfileInfo>
         </ProfileSection>
 
         <TabContainer>
           <Tab
             isActive={activeTab === 'posts'}
-            onClick={() => setActiveTab('posts')}
+            onClick={() => handleTabChange('posts')}
           >
             Posts
           </Tab>
           <Tab
             isActive={activeTab === 'likes'}
-            onClick={() => setActiveTab('likes')}
+            onClick={() => handleTabChange('likes')}
           >
             Likes
           </Tab>
         </TabContainer>
 
         <InfiniteScrollContainer>
-          {/* 예시 이미지 리스트 */}
           <ImageGrid>
-            {images.map((image: any, index: any) => (
-              <ImageItem
-                key={index}
-                src={image}
-                alt={`Image ${index}`}
-                onClick={() => navigate('/story')}
-              />
-            ))}
+            {Array.isArray(displayImages) &&
+              displayImages.map((post, index) => (
+                <ImageItem
+                  key={index}
+                  src={`data:image/jpeg;base64,${post.image}`}
+                  alt={`Post Image ${index}`}
+                  onClick={() => navigate(`/story/${post.id}`)}
+                />
+              ))}
           </ImageGrid>
         </InfiniteScrollContainer>
       </BodyContainer>
 
       {selectedProfileImage && (
         <ImageModal onClick={() => setSelectedProfileImage(null)}>
-          <img src={selectedProfileImage} alt="Selected" />
+          <img
+            src={`data:image/jpeg;base64,${selectedProfileImage}`}
+            alt="Selected_Image"
+          />
         </ImageModal>
       )}
     </MyPageContainer>
@@ -319,6 +428,7 @@ const ProfileImageChangeButton = styled.div`
   justify-content: center;
   line-height: 1.8rem;
   cursor: pointer;
+  z-index: 1;
 `;
 
 const ProfileSection = styled.div`
@@ -335,8 +445,8 @@ const ProfileImage = styled.img`
   flex-shrink: 0;
   margin-right: 2rem;
   margin-top: 1rem;
-  background-color: ${(props) =>
-    props.src ? 'transparent' : '#999'}; // 이미지가 없으면 #999 배경색 사용
+  background-color: ${(props) => (props.src ? 'transparent' : '#999')};
+  cursor: pointer;
 `;
 
 const ProfileInfo = styled.div`
@@ -456,17 +566,29 @@ const EditCompleteButton = styled.button`
   }
 `;
 
+const CancelButton = styled(EditCompleteButton)`
+  background-color: #999;
+  margin-right: 0.4rem;
+
+  &:hover {
+    background-color: #777;
+  }
+`;
+
 const DisplayName = styled.span`
   font-size: 1.6rem;
   font-weight: bold;
   color: #333;
   flex-grow: 1;
+  margin-left: -0.55rem;
 `;
 
 const DisplayBio = styled.span`
   font-size: 1rem;
   color: #333;
   flex-grow: 1;
+  white-space: pre-wrap;
+  line-height: 1.2;
 `;
 
 const EditingContainer = styled.div`

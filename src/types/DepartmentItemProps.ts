@@ -8,5 +8,6 @@ export interface DepartmentItemProps {
     count: number;
     recent: string;
     imageUrl?: string;
+    channelId: string;
   };
 }

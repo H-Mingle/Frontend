@@ -3,18 +3,41 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { DepartmentItemProps } from '../../types/DepartmentItemProps';
 
-const DepartmentItem: React.FC<DepartmentItemProps> = ({ department }) => {
+const DepartmentItem: React.FC<DepartmentItemProps & { index: number }> = ({
+  department,
+  index,
+}) => {
   const navigate = useNavigate();
+
+  // 이미지 경로를 결정하는 함수
+  const getImageSrc = (index) => {
+    let imagePath;
+    switch (index) {
+      case 0:
+        imagePath = '0.jpg';
+        break;
+      case 1:
+        imagePath = '1.jpeg';
+        break;
+      case 2:
+        imagePath = '2.jpeg';
+        break;
+      case 3:
+        imagePath = '3.jpeg';
+        break;
+      case 4:
+        imagePath = '4.jpeg';
+        break;
+      default:
+        imagePath = department.imageUrl || 'default_department_image.png';
+        break;
+    }
+    return `/images/department/${imagePath}`;
+  };
 
   return (
     <ItemContainer onClick={() => navigate('/feed')}>
-      <ItemImage
-        src={
-          department.imageUrl ||
-          '/images/department/default_department_image.png'
-        }
-        alt="department"
-      />
+      <ItemImage src={getImageSrc(index)} alt="department" />
       <ItemInfo>
         <h3>{department.name}</h3>
         <p className="location">🏬 {department.location}</p>

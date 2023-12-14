@@ -23,8 +23,7 @@ const Story = () => {
   const navigate = useNavigate();
   const { isAuthenticated, userId } = useAuth(); // 인증된 사용자의 ID 가져오기
 
-  // const { id } = useParams(); // 게시글 ID
-  const id = 25; // 임시 게시글 ID
+  const { id } = useParams(); // 게시글 ID
   const [post, setPost] = useState<StoryData | null>(null); // 게시글 데이터 상태
   const [images, setImages] = useState([]); // 이미지 데이터 상태
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -35,8 +34,11 @@ const Story = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  // const isAuthor = post && post.owner;
+  const isAuthor = true;
+
   const handleBack = () => {
-    navigate(-1);
+    navigate('/feed');
   };
 
   useEffect(() => {
@@ -190,12 +192,26 @@ const Story = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const handleExtraFunctionMessage = async () => {
+    window.confirm('추가 구현 예정입니다. 🙂');
+  };
+
   return (
     <StoryPageWrapper>
       <NavigationBar>
         <BackButton onClick={handleBack}>Back</BackButton>
         <ChannelName>{post && post.channelName}</ChannelName>
         <NavigationRightSection>
+          {isAuthor && (
+            <>
+              <EditButton onClick={handleExtraFunctionMessage}>
+                Modify
+              </EditButton>
+              <EditButton onClick={handleExtraFunctionMessage}>
+                Delete
+              </EditButton>
+            </>
+          )}
           {isAuthenticated ? (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
@@ -216,15 +232,24 @@ const Story = () => {
         </NavigationRightSection>
       </NavigationBar>
       <ArrowContainer>
-        <Arrow
-          direction="left"
-          onClick={() => navigate(`/story/${post && post.previousId}`)}
-        />
-        <Arrow
-          direction="right"
-          onClick={() => navigate(`/story/${post && post.subsequentId}`)}
-        />
+        {post && post.subsequentId ? (
+          <Arrow
+            direction="left"
+            onClick={() => navigate(`/story/${post.subsequentId}`)}
+          />
+        ) : (
+          <Arrow direction="left" disabled />
+        )}
+        {post && post.previousId ? (
+          <Arrow
+            direction="right"
+            onClick={() => navigate(`/story/${post.previousId}`)}
+          />
+        ) : (
+          <Arrow direction="right" disabled />
+        )}
       </ArrowContainer>
+
       <StoryContainer>
         <PostDate>{post && post.createdDate}</PostDate>
         <ImagesContainer>
@@ -308,7 +333,8 @@ const Story = () => {
                       <CommentText>{comment.content}</CommentText>
                       <CommentMetadata>
                         <span>{comment.recent}</span>
-                        {comment.writer && isAuthenticated && (
+                        {/* TODO: {comment.writer && isAuthenticated && ( */}
+                        {true && isAuthenticated && (
                           <div>
                             <CommentEditButton
                               onClick={() => initiateEditComment(comment)}
@@ -479,7 +505,9 @@ const ArrowContainer = styled.div`
   z-index: 100;
 `;
 
-const Arrow = styled.div<{ direction: 'left' | 'right' }>`
+const Arrow = styled.div<{ direction: 'left' | 'right'; disabled?: boolean }>`
+  cursor: ${({ disabled }) => (disabled ? 'default' : 'pointer')};
+  opacity: ${({ disabled }) => (disabled ? '0.3' : '1')};
   cursor: pointer;
   width: 30px;
   height: 30px;
@@ -678,6 +706,7 @@ const UsernameForComment = styled.div`
   font-weight: bold;
   margin-bottom: 0.5rem;
   font-size: 1rem;
+  margin-left: -0.3rem;
 `;
 
 const CommentText = styled.span`

@@ -2,23 +2,34 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GridItemProps } from '../types/GridItemProps';
-import { carouselImageData } from '../constants/HomePage/carouselImageData';
+import { getPosts } from '../api/posts'; // 스토리 리스트 조회 API 가져오기
+import { PostData } from '../types/PostData'; // PostData 타입 가져오기
 import { useAuth } from '../context/AuthContext';
 
 const Feed = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [images, setImages] = useState<string[]>([]); // 이미지 데이터를 저장할 상태 (임시로 carouselImageData를 사용)
+  const [posts, setPosts] = useState<PostData[]>([]); // 게시글 데이터 저장
+  const [channelName, setChannelName] = useState<string>(''); // 채널 이름 저장
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    // carouselImageData를 3번 반복하여 추가 (임시 데이터, 나중에는 실제 데이터 서버로부터 fetch)
-    const repeatedData = Array(3)
-      .fill(carouselImageData)
-      .flat()
-      .map((image) => image.src);
-    setImages(repeatedData);
-  }, []);
+    const fetchPosts = async () => {
+      try {
+        const response = await getPosts(currentPage, 10, 1);
+        if (response && response.success) {
+          setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
+          setChannelName(response.data.channelName);
+          // 'next' 값도 필요하면 여기서 상태에 저장 (인피니티 스크롤에 활용)
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    fetchPosts();
+  }, [currentPage]);
 
   const isLargeImage = (index: any) => {
     return index % 10 === 2 || index % 10 === 5;
@@ -43,16 +54,10 @@ const Feed = () => {
     window.addEventListener('scroll', handleScroll);
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [images]);
+  }, []);
 
   const loadMoreImages = () => {
-    // 기존 이미지 목록에 추가 이미지 데이터 연결
-    const newImageSources = Array(1)
-      .fill(carouselImageData)
-      .flat()
-      .map((image) => image.src);
-
-    setImages((prevImages) => [...prevImages, ...newImageSources]);
+    setCurrentPage((prevPage) => prevPage + 1);
   };
 
   return (
@@ -89,16 +94,15 @@ const Feed = () => {
           )}
         </NavigationRightSection>
       </NavigationBar>
-      {/* 서브타이틀 변수 따로 받아서 현백 목동점의 이야기, 더현대 서울의 이야기 이런식으로 동적으로 만들기 */}
-      <SubTitle>여러분이 만들어가는 더현대 서울의 이야기</SubTitle>
+      <SubTitle>여러분이 만들어가는 {channelName}의 이야기</SubTitle>
       <GridContainer>
-        {images.map((image, index) => (
+        {posts.map((post, index) => (
           <GridItem
             key={index}
-            large={isLargeImage(index)} // 패턴에 따른 셀 병합
-            onClick={() => navigate('/story')}
+            large={isLargeImage(index)}
+            onClick={() => navigate(`/story/${post.postId}`)}
           >
-            <img src={image} alt={`Image ${index}`} />
+            <img src={`data:image/jpeg;base64,${post.image}`} alt="thumbnail" />
           </GridItem>
         ))}
       </GridContainer>

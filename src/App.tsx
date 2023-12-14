@@ -29,7 +29,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/story/25" element={<Story />} />
+        <Route path="/story/:id" element={<Story />} />
         <Route path="/edit" element={<Edit />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

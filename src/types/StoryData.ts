@@ -9,4 +9,6 @@ export interface StoryData {
   previousId: number;
   subsequentId: number;
   liked: boolean;
+  memberId: number;
+  owner: boolean;
 }
