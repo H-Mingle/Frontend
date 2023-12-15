@@ -42,7 +42,9 @@ const DepartmentItem: React.FC<DepartmentItemProps & { index: number }> = ({
         <h3>{department.name}</h3>
         <p className="location">🏬 {department.location}</p>
         <p className="contact">☎ {department.phoneNumber}</p>
-        <p className="text">{department.description}</p>
+        <ItemTextContainer>
+          <p className="text">{department.description}</p>
+        </ItemTextContainer>
       </ItemInfo>
     </ItemContainer>
   );
@@ -99,6 +101,11 @@ const ItemInfo = styled.div`
     font-size: 1.1rem;
     line-height: 1.5;
   }
+`;
+
+const ItemTextContainer = styled.div`
+  white-space: pre-wrap;
+  line-height: 1.2;
 `;
 
 export default DepartmentItem;
