@@ -4,7 +4,6 @@ import HomeTitle from '../components/HomePage/HomeTitle';
 import HomeEnterButton from '../components/HomePage/HomeEnterButton';
 import styled from 'styled-components';
 import Header from '../components/Common/Header';
-import Footer from '../components/Common/Footer';
 
 const Home = () => {
   return (
@@ -15,7 +14,6 @@ const Home = () => {
         <HomeTitle />
         <HomeEnterButton />
       </HomeWrapper>
-      {/* <Footer /> */}
     </div>
   );
 };

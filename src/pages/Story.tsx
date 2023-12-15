@@ -21,7 +21,7 @@ import '@toast-ui/editor/dist/toastui-editor-viewer.css';
 const Story = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, userId } = useAuth(); // 인증된 사용자의 ID 가져오기
+  const { isAuthenticated } = useAuth(); // 인증된 사용자의 ID 가져오기
 
   const { id } = useParams(); // 게시글 ID
   const [post, setPost] = useState<StoryData | null>(null); // 게시글 데이터 상태
@@ -117,6 +117,7 @@ const Story = () => {
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, page, id]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {

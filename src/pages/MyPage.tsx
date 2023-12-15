@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, ChangeEvent } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { TabProps } from '../types/TabProps';
-import { carouselImageData } from '../constants/HomePage/carouselImageData'; // 이미지 데이터 임포트
 import { ModalContainerProps } from '../types/ModalContainerProps';
 import { ModalBackgroundProps } from '../types/ModalBackgroundProps';
 import { useAuth } from '../context/AuthContext';
@@ -42,8 +41,6 @@ const MyPage = () => {
   useEffect(() => {
     fetchUserProfile();
   }, []);
-
-  const [images, setImages] = useState([]);
 
   const getDefaultImage = () => {
     return '/images/userDefault/userDefault.png'; // 기본 이미지 경로
@@ -230,6 +227,7 @@ const MyPage = () => {
     } else if (activeTab === 'likes') {
       fetchUserLikedPosts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, currentPage]);
 
   const displayImages = activeTab === 'posts' ? posts : likedPosts;
