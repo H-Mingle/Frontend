@@ -7,4 +7,5 @@ export interface CommentData {
   parentId: number | null;
   memberId: number;
   writer: boolean;
+  image: File | null;
 }

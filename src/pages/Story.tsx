@@ -34,8 +34,8 @@ const Story = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // const isAuthor = post && post.owner;
-  const isAuthor = true;
+  const isAuthor =
+    post?.nickname === '밍글이' || post?.nickname === '밍글밍글이';
 
   const handleBack = () => {
     navigate('/feed');
@@ -216,7 +216,10 @@ const Story = () => {
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <EditButton onClick={() => navigate('/edit')}>Edit</EditButton>
               <ProfileImageContainer onClick={() => navigate('/mypage')}>
-                <ProfileImage src="/images/carousel/1.png" alt="Profile" />
+                <ProfileImage
+                  src={`data:image/jpeg;base64,${post?.myImage}`}
+                  alt="Profile_Image"
+                />
               </ProfileImageContainer>
             </div>
           ) : (
@@ -275,8 +278,8 @@ const Story = () => {
             <Username>{post && post.nickname}</Username>
             <ProfileImageContainerForWriter>
               <ProfileImageForWriter
-                src="/images/carousel/1.png"
-                alt="Profile"
+                src={`data:image/jpeg;base64,${post?.writerImage}`}
+                alt="Profile_Image"
               />
             </ProfileImageContainerForWriter>
           </StatisticsRightSection>
@@ -304,8 +307,8 @@ const Story = () => {
                   onClick={() => navigate('/mypage')}
                 >
                   <ProfileImageForComment
-                    src="/images/carousel/1.png"
-                    alt="Profile"
+                    src={`data:image/jpeg;base64,${comment.image}`}
+                    alt="Profile_Image"
                   />
                 </ProfileImageContainerForComment>
                 <CommentDetails>
@@ -333,8 +336,7 @@ const Story = () => {
                       <CommentText>{comment.content}</CommentText>
                       <CommentMetadata>
                         <span>{comment.recent}</span>
-                        {/* TODO: {comment.writer && isAuthenticated && ( */}
-                        {true && isAuthenticated && (
+                        {comment.memberId === 1 && isAuthenticated && (
                           <div>
                             <CommentEditButton
                               onClick={() => initiateEditComment(comment)}

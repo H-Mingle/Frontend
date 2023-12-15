@@ -11,4 +11,6 @@ export interface StoryData {
   liked: boolean;
   memberId: number;
   owner: boolean;
+  myImage: File | null;
+  writerImage: File | null;
 }
