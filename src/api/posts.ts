@@ -5,7 +5,11 @@ import { isAxiosError } from 'axios';
 // 스토리 상세 조회
 export const getPost = async (id: number) => {
   try {
-    const response = await axios.get(`/posts/${id}`);
+    const response = await axios.get(`/posts/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    });
 
     return response.data;
   } catch (error) {
